@@ -7,46 +7,6 @@
 
 using namespace std;
 
-void drawAll(int* bodyX, int* bodyY, int sizeBody) {
-
-    // rozmiar planszy to 50:20
-    // rozmiar do poruszania 48:18
-
-    for (int i = 0; i < 50; i++)
-        cout << "#";
-
-    cout << endl;
-
-    for (int i = 0; i < 20; i++) {
-
-        cout << "#";
-
-        for (int j = 0; j < 48; j++) {
-
-            bool doFit = false;
-
-            for (int k = 0; k < sizeBody; k++) {
-
-                if (bodyX[k] == j && bodyY[k] == i) {
-
-                    cout << 'o';
-
-                    doFit = true;
-                    break;
-                }
-            }
-
-            if(!doFit)
-                cout << " ";
-        }
-
-        cout << "#\n";
-    }
-
-    for (int i = 0; i < 50; i++)
-        cout << "#";
-}
-
 void gotoxy(int x, int y) {
 
     COORD c;
@@ -57,74 +17,73 @@ void gotoxy(int x, int y) {
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
 
-void respFood(int* foodX, int* foodY, bool newValues = true) {
+void clear(int fieldX, int fieldY) {
 
-    if (newValues) {
+    for (int i = 1; i < fieldX-2; i++) {
 
-        *foodX = (int)rand() % 48;
-        *foodY = (int)rand() % 19;
-    }
-    else {
+        for (int j = 1; j <= fieldY; j++) {
 
-        gotoxy(*foodX, *foodY);
-
-        cout << "x";
+            gotoxy(i, j);
+            cout << " ";
+        }
     }
 }
 
-void update(int* bodyX, int* bodyY, int sizeBody, int* foodX, int* foodY) {
+void clearSnake(int* bodyX, int* bodyY, int sizeBody) {
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < sizeBody; i++) {
 
-        for (int j = 0; j < 48; j++) {
-
-            if (foodX != NULL) {
-
-                if (*foodX == j && *foodY == i) {
-
-                    respFood(foodX, foodY, false);
-                }
-            }
-
-            for (int k = 0; k < sizeBody; k++) {
-
-                if (bodyX[k] == j && bodyY[k] == i) {
-
-                    gotoxy(j+1, i+1);
-
-                    cout << 'o';
-
-                    break;
-                }
-            }
-        }
+        gotoxy(bodyX[i], bodyY[i]);
+        cout << " ";
     }
-
-    gotoxy(bodyX[0], bodyY[0]);
 }
 
-void clear(int* bodyX, int* bodyY, int sizeBody) {
+void drawFrame(int fieldX, int fieldY) {
 
-    for (int i = 0; i < 20; i++) {
+    for (int j = 1; j < fieldX; j++) {
 
-        for (int j = 0; j < 48; j++) {
-
-            bool doFit = false;
-
-            for (int k = 0; k < sizeBody; k++) {
-
-                if (bodyX[k] == j && bodyY[k] == i) {
-
-                    gotoxy(j+1, i+1);
-
-                    cout << " ";
-
-                    doFit = true;
-                    break;
-                }
-            }
-        }
+        cout << "#";
     }
+
+    cout << endl;
+
+    for (int i = 0; i < fieldY; i++) {
+
+        cout << "#";
+
+        for (int j = 1; j < fieldX-2; j++) {
+
+            cout << " ";
+        }
+
+        cout << "#" <<endl;
+    }
+
+    for (int j = 1; j < fieldX; j++) {
+
+        cout << "#";
+    }
+}
+
+void drawSnake(int* bodyX, int* bodyY, int sizeBody) {
+
+    for (int i = 0; i < sizeBody; i++) {
+
+        gotoxy(bodyX[i], bodyY[i]);
+        cout << "o";
+    }
+}
+
+void drawFood(int foodX, int foodY) {
+
+    gotoxy(foodX, foodY);
+    cout << "$";
+}
+
+void drawPoints(int points, int x, int y) {
+
+    gotoxy(x, y);
+    cout << "Punkty: " << points;
 }
 
 int main()
@@ -145,118 +104,140 @@ int main()
 
     int sizeBody = 1;
 
-    int moveFieldX = 48;
-    int moveFieldY = 18;
+    int fieldX = 50;
+    int fieldY = 20;
 
-    int* foodX = new int(1);
-    int* foodY = new int(1);
+    int foodX = 30;
+    int foodY = 15;
     
     bool doEnd = false;
 
-    drawAll(bodyX, bodyY, sizeBody);
+    int direction = 0;
 
-    respFood(foodX, foodY);
+    int points = 0;
+
+    drawFrame(fieldX, fieldY);
+    drawSnake(bodyX, bodyY, sizeBody);
+    drawFood(foodX, foodY);
+    drawPoints(points, 60, 10);
+
+    //dostepna powiezchnia do -3 od szerokosci i - 1 wysokosci
 
     while (!doEnd) {
 
         bool doFoodAte = false;
 
-        switch (_getch()) {
+        Sleep(100);
+
+        if (_kbhit()) {
+
+            switch (_getch()) {
 
             case 27:
-            
+
                 doEnd = true;
                 break;
 
-            case 119:
+            case 119: //W
 
-                clear(bodyX, bodyY, sizeBody);
+                direction = 1;
+                break;
+
+            case 115: //S
+
+                direction = 2;
+                break;
+
+            case 97: //A
+
+                direction = 3;
+                break;
+
+            case 100: //D
+
+                direction = 4;
+                break;
+            }
+        }
+
+        clearSnake(bodyX, bodyY, sizeBody);
+
+        switch (direction) {
+
+            case 1:
 
                 for (int i = 0; i < sizeBody; i++) {
 
-                    if (bodyY[i] - 1 >= 0)
+                    if (bodyY[i] > 1)
                         bodyY[i]--;
                 }
 
-                doFoodAte = false;
+            break;
 
-                if (foodX != NULL) {
-
-                    if (*foodX == bodyX[0] && *foodY == bodyY[0]) {
-
-                        respFood(foodX, foodY);
-                    }
-                }
-
-                update(bodyX, bodyY, sizeBody, foodX, foodY);
-
-                break;
-
-            case 115:
-
-                clear(bodyX, bodyY, sizeBody);
+            case 2:
 
                 for (int i = 0; i < sizeBody; i++) {
 
-                    if (bodyY[i] + 1 < 20)
+                    if (bodyY[i] < fieldY)
                         bodyY[i]++;
                 }
 
-                if (foodX != NULL) {
+            break;
 
-                    if (*foodX == bodyX[0] && *foodY == bodyY[0]) {
-
-                        respFood(foodX, foodY);
-                    }
-                }
-
-                update(bodyX, bodyY, sizeBody, foodX, foodY);
-
-                break;
-
-            case 97:
-
-                clear(bodyX, bodyY, sizeBody);
+            case 3:
 
                 for (int i = 0; i < sizeBody; i++) {
 
-                    if (bodyX[i] - 1 >= 0)
+                    if (bodyX[i] > 1)
                         bodyX[i]--;
                 }
 
-                if (foodX != NULL) {
+            break;
 
-                    if (*foodX == bodyX[0] && *foodY == bodyY[0]) {
-
-                        respFood(foodX, foodY);
-                    }
-                }
-
-                update(bodyX, bodyY, sizeBody, foodX, foodY);
-
-                break;
-
-            case 100:
-
-                clear(bodyX, bodyY, sizeBody);
+            case 4:
 
                 for (int i = 0; i < sizeBody; i++) {
 
-                    if (bodyX[i] + 1 < 48)
+                    if (bodyX[i] < fieldX - 3)
                         bodyX[i]++;
                 }
 
-                if (foodX != NULL) {
+            break;
+        }
 
-                    if (*foodX == bodyX[0] && *foodY == bodyY[0]) {
+        if (direction > 0) {
 
-                        respFood(foodX, foodY);
+            if (bodyX[0] == foodX && bodyY[0] == foodY) {
+
+                while (true) {
+
+                    bool fieldIsClear = false;
+
+                    foodX = rand() % fieldX - 3 + 1;
+                    foodY = rand() % fieldY + 1;
+
+                    for (int i = 0; i < sizeBody; i++) {
+
+                        if (bodyX[i] == foodX && bodyY[i] == foodY) {
+
+                            fieldIsClear = false;
+                            break;
+                        }
+                        else
+                            fieldIsClear = true;
                     }
+
+                    if (fieldIsClear)
+                        break;
                 }
 
-                update(bodyX, bodyY, sizeBody, foodX, foodY);
+                drawFood(foodX, foodY);
+                points++;
 
-                break;
+                drawPoints(points, 60, 10);
+            }
+
+            drawSnake(bodyX, bodyY, sizeBody);
         }
     }
 }
