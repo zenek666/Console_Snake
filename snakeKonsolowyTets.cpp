@@ -298,10 +298,7 @@ void ateFoodLogic() {
             break;
     }
 
-    drawFood();
     points++;
-
-    drawPoints(60, 10);
 }
 
 int main()
@@ -353,8 +350,12 @@ int main()
 
         if (direction > 0) {
 
-            if (bodyX[0] == foodX && bodyY[0] == foodY)
+            if (bodyX[0] == foodX && bodyY[0] == foodY) {
+
                 ateFoodLogic();
+                drawFood();
+                drawPoints(60, 10);
+            }
             else {
 
                 for (int i = 1; i < sizeBody; i++) {
