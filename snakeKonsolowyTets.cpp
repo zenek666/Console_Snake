@@ -17,14 +17,9 @@ int foodY = 15;
 
 int points = 0;
 
-bool doEnd = false;
-
 int direction = 0;
 
-int* prevBodyX = new int[5];
-int* prevBodyY = new int[5];
-
-void gotoxy(int x, int y) {
+void gotoxy(int x, int y) { // ustawienie pozycji kursora (kreska w konsoli)
 
     COORD c;
 
@@ -32,18 +27,6 @@ void gotoxy(int x, int y) {
     c.Y = y;
 
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
-}
-
-void clear() {
-
-    for (int i = 1; i < fieldX-2; i++) {
-
-        for (int j = 1; j <= fieldY; j++) {
-
-            gotoxy(i, j);
-            cout << " ";
-        }
-    }
 }
 
 void clearSnake() {
@@ -111,7 +94,7 @@ void keyUse() {
 
         case 27:
 
-            doEnd = true;
+            //doEnd = true;
             break;
 
         case 119: //W
@@ -143,11 +126,20 @@ void keyUse() {
 
 void moving() {
 
+    int *prevBodyX = new int[sizeBody]; // dynamiczne, gdyz nie wiedzialem jak zrobic zwykla tablice o rozmiarze rownym zmiennej
+    int *prevBodyY = new int[sizeBody];
+
+    for (int i = 0; i < sizeBody; i++) {
+
+        prevBodyX[i] = bodyX[i];
+        prevBodyY[i] = bodyY[i];
+    }
+
     switch (direction) {
 
         case 1:
 
-            if (bodyY[0] > 1) {
+            if (bodyY[0] >= 1) {
 
                 bodyY[0]--;
 
@@ -157,14 +149,12 @@ void moving() {
                     bodyY[i] = prevBodyY[i - 1];
                 }
             }
-            else
-                doEnd = true;
 
             break;
 
         case 2:
 
-            if (bodyY[0] < fieldY) {
+            if (bodyY[0] <= fieldY) {
 
                 bodyY[0]++;
 
@@ -174,14 +164,12 @@ void moving() {
                     bodyY[i] = prevBodyY[i - 1];
                 }
             }
-            else
-                doEnd = true;
 
             break;
 
         case 3:
 
-            if (bodyX[0] > 1) {
+            if (bodyX[0] >= 1) {
 
                 bodyX[0]--;
 
@@ -191,14 +179,12 @@ void moving() {
                     bodyY[i] = prevBodyY[i - 1];
                 }
             }
-            else
-                doEnd = true;
 
             break;
 
         case 4:
 
-            if (bodyX[0] < fieldX - 3) {
+            if (bodyX[0] <= fieldX - 3) {
 
                 bodyX[0]++;
 
@@ -208,11 +194,12 @@ void moving() {
                     bodyY[i] = prevBodyY[i - 1];
                 }
             }
-            else
-                doEnd = true;
 
             break;
     }
+
+    delete [] prevBodyX;
+    delete [] prevBodyY;
 }
 
 void incrementBody() {
@@ -236,9 +223,6 @@ void incrementBody() {
 
     bodyX = newBodyX;
     bodyY = newBodyY;
-
-    prevBodyX = new int[sizeBody];
-    prevBodyY = new int[sizeBody];
 
     switch (direction) {
 
@@ -272,37 +256,90 @@ void incrementBody() {
     }
 }
 
-void ateFoodLogic() {
+void eatingFoodLogic() {
 
-    incrementBody();
+    if (bodyX[0] == foodX && bodyY[0] == foodY) {
 
-    while (true) {
+        incrementBody();
 
-        bool fieldIsClear = false;
+        while (true) {
 
-        foodX = rand() % fieldX - 3 + 1;
-        foodY = rand() % fieldY + 1;
+            bool fieldIsClear = false;
 
-        for (int i = 0; i < sizeBody; i++) {
+            foodX = rand() % fieldX - 3 + 1;
+            foodY = rand() % fieldY + 1;
 
-            if (bodyX[i] == foodX && bodyY[i] == foodY) {
+            for (int i = 0; i < sizeBody; i++) {
 
-                fieldIsClear = false;
-                break;
+                if (bodyX[i] == foodX && bodyY[i] == foodY) {
+
+                    fieldIsClear = false;
+                    break;
+                }
+                else
+                    fieldIsClear = true;
             }
-            else
-                fieldIsClear = true;
+
+            if (fieldIsClear)
+                break;
         }
 
-        if (fieldIsClear)
-            break;
+        points++;
+    }
+}
+
+bool checkDoTouchWall() {
+
+    switch (direction) {
+
+        case 1:
+
+            if (bodyY[0] < 1) {
+
+                return true;
+            }
+
+        case 2:
+
+            if (bodyY[0] > fieldY) {
+
+                return true;
+            }
+
+        case 3:
+
+            if (bodyX[0] < 1) {
+
+                return true;
+            }
+
+        case 4:
+
+            if (bodyX[0] > fieldX - 3) {
+
+                return true;
+            }
     }
 
-    points++;
+    return false;
+}
+
+bool checkDoAteItself() {
+
+    for (int i = 1; i < sizeBody; i++) {
+
+        if (bodyX[0] == bodyX[i] && bodyY[0] == bodyY[i]) {
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int main()
 {
+    // kod od 346-352 jest potrzebny, aby ukryc konsolowy kursor
     HANDLE myconsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     CONSOLE_CURSOR_INFO cursor;
@@ -327,49 +364,24 @@ int main()
     drawFood();
     drawPoints(60, 10);
 
-    while (!doEnd) {
-
-        bool doFoodAte = false;
+    while (true) {
 
         Sleep(100);
 
+        clearSnake();
+
         keyUse();
-
-        if (direction > 0) {
-
-            clearSnake();
-
-            for (int i = 0; i < sizeBody; i++) {
-
-                prevBodyX[i] = bodyX[i];
-                prevBodyY[i] = bodyY[i];
-            }
-        }
 
         moving();
 
-        if (direction > 0) {
+        if (checkDoTouchWall() || checkDoAteItself())
+            break;
 
-            if (bodyX[0] == foodX && bodyY[0] == foodY) {
+        eatingFoodLogic();
 
-                ateFoodLogic();
-                drawFood();
-                drawPoints(60, 10);
-            }
-            else {
-
-                for (int i = 1; i < sizeBody; i++) {
-
-                    if (bodyX[0] == bodyX[i] && bodyY[0] == bodyY[i]) {
-
-                        doEnd = true;
-                        break;
-                    }
-                }
-            }
-
-            drawSnake();
-        }
+        drawFood();
+        drawSnake();
+        drawPoints(60, 10);
     }
 }
 
