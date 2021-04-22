@@ -229,7 +229,7 @@ void incrementBody() {
         case 1:
 
             bodyX[sizeBody - 1] = bodyX[sizeBody - 2];
-            bodyY[sizeBody - 1] = 3;
+            bodyY[sizeBody - 1] = bodyY[sizeBody - 2] + 1;
 
             break;
 
